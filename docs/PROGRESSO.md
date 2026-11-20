@@ -7,7 +7,8 @@ Atualizado em 20/11/2026. A e B são identificadores provisórios dos integrante
 | Documentação inicial e organização | Ambos | concluído | Documentos em docs/ e enunciado preservado |
 | Ambiente e contratos | Ambos | concluído | Tipos, build, Compose e smoke em clone limpo |
 | Auth, interface e chat privado | A / B | concluído | Tipos/build, cinco testes unitários, integração, E2E isolado, reinício e clone limpo aprovados |
-| Revisão pela dupla e publicação | Ambos | pendente | Branch local codex/auth-chat-privado; sem push ou PR |
+| Publicação do código | Ambos | concluído | Base em main e implementação publicada no [PR #1](https://github.com/LucasAbrandao/SCD_Sistema_de_Chat_Distribu-do/pull/1) |
+| Revisão pela dupla | Ambos | pendente | PR #1 aberto, aguardando revisão; sem merge |
 | Validação da interpretação de disponibilidade | Ambos | pendente | Confirmar com professora máquinas distintas e falhas de infraestrutura |
 | Grupos e autorização de grupos | A / B | pendente | Entrega a membros e bloqueio de terceiros |
 | Réplicas e recuperação | B / A | pendente | Estudos formais de falha e balanceamento interno Auth |
@@ -16,7 +17,7 @@ Atualizado em 20/11/2026. A e B são identificadores provisórios dos integrante
 
 **Agora** — Cadastro/login, JWT, usuários, conversas privadas, histórico, socket autenticado e interface implementados. Migrações versionadas com checksums, lock e transações integradas ao Compose. Restrições e locks garantem conversa única por dupla, idempotência por remetente/tentativa e posição crescente. Sessão por aba; sincronização após reconexão e a cada cinco segundos. Autorização de conversa privada testada.
 
-**Versionamento** — Base registrada no commit local `ec7ab11`. Autor obtido do perfil GitHub do usuário, com endereço privado de commits GitHub. Trabalho na branch `codex/auth-chat-privado`; nenhuma publicação externa.
+**Versionamento** — Base `ec7ab11` publicada como main; implementação `a2f150a` na branch `codex/auth-chat-privado`. [PR #1](https://github.com/LucasAbrandao/SCD_Sistema_de_Chat_Distribu-do/pull/1) aberto após autorização do usuário. Autor obtido do perfil GitHub, com endereço privado de commits. Nenhum merge realizado.
 
 **Próximo passo** — Revisão da dupla e validação manual pelo roteiro [VALIDACAO.md](VALIDACAO.md). Grupos, carga e estudos formais de queda exigem tarefa posterior. Confirmar abrangência de disponibilidade com a professora antes da entrega final.
 
@@ -48,4 +49,4 @@ Um teste detectou ordenação textual de posições (`1,10,11,2`); a consulta fo
 
 ## Limites
 
-Grupos permanecem 501. Não há refresh token, revogação no logout ou confirmação de leitura. Falha de publicação após commit é recuperável pelo histórico; não existe promessa de entrega exatamente uma vez. Banco/Redis/proxy/host ainda são pontos únicos de falha. Auth interno aponta para auth-1 até o marco de réplicas. Não foram executados estudos de queda de réplica, carga de 100 usuários/20 grupos ou publicação externa. O teste de falha de publicação usa injeção na camada de entrega; não equivale a derrubar Redis em produção.
+Grupos permanecem 501. Não há refresh token, revogação no logout ou confirmação de leitura. Falha de publicação após commit é recuperável pelo histórico; não existe promessa de entrega exatamente uma vez. Banco/Redis/proxy/host ainda são pontos únicos de falha. Auth interno aponta para auth-1 até o marco de réplicas. Não foram executados estudos de queda de réplica, carga de 100 usuários/20 grupos ou hospedagem pública da aplicação. Código publicado no GitHub; revisão e merge pendentes. O teste de falha de publicação usa injeção na camada de entrega; não equivale a derrubar Redis em produção.
