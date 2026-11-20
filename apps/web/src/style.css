@@ -1,0 +1,1 @@
+:root{font-family:system-ui,sans-serif;color:#e5edf5;background:#101827}body{margin:0}main{max-width:48rem;margin:12vh auto;padding:2rem}h1{font-size:clamp(2rem,6vw,3.5rem)}h2{color:#77d6bd}p{line-height:1.7}p[role=status]{border:1px solid #526679;padding:1rem;border-radius:.5rem}

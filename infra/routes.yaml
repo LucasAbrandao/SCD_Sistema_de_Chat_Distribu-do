@@ -1,0 +1,35 @@
+http:
+  routers:
+    auth:
+      rule: PathPrefix(`/api/auth`)
+      service: auth
+      entryPoints: [web]
+      priority: 100
+    chat:
+      rule: PathPrefix(`/api/chat`) || PathPrefix(`/socket.io`)
+      service: chat
+      entryPoints: [web]
+      priority: 100
+    web:
+      rule: PathPrefix(`/`)
+      service: web
+      entryPoints: [web]
+      priority: 1
+  services:
+    auth:
+      loadBalancer:
+        healthCheck: { path: /health/ready, interval: 5s, timeout: 3s }
+        servers:
+          - url: http://auth-1:3000
+          - url: http://auth-2:3000
+    chat:
+      loadBalancer:
+        healthCheck: { path: /health/ready, interval: 5s, timeout: 3s }
+        servers:
+          - url: http://chat-1:3000
+          - url: http://chat-2:3000
+    web:
+      loadBalancer:
+        healthCheck: { path: /health/ready, interval: 5s, timeout: 3s }
+        servers:
+          - url: http://web:80
