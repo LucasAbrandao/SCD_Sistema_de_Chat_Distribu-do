@@ -1,6 +1,6 @@
 # Contratos REST e Socket.IO — v1
 
-Estado: especificação para os próximos marcos. Apenas healthchecks estão implementados; rotas de negócio respondem HTTP 501 `NOT_IMPLEMENTED`. Socket.IO completa o transporte WebSocket e recusa o namespace com `connect_error.data.code=NOT_IMPLEMENTED`. Não existe bypass de autenticação.
+Estado: cadastro, login, usuários, conversas privadas, histórico e eventos autenticados implementados. Criação de grupos permanece HTTP 501 `NOT_IMPLEMENTED`. Não existe bypass de autenticação.
 
 ## Convenções
 
@@ -21,7 +21,7 @@ Erro HTTP: `{ "error": { "code": "UNAUTHENTICATED", "message": "Autenticação n
 | 501 | NOT_IMPLEMENTED | Operação ainda não entregue |
 | 500 | INTERNAL_ERROR | Falha inesperada |
 
-## REST previsto
+## REST
 
 | Método e caminho | Entrada | Sucesso |
 |---|---|---|
@@ -37,9 +37,9 @@ Erro HTTP: `{ "error": { "code": "UNAUTHENTICATED", "message": "Autenticação n
 
 Username: 3–32 caracteres ASCII `[a-z0-9_]`, minúsculo, único; senha: 12–128 caracteres, sem trim ou normalização silenciosa. Conteúdo: 1–4000 caracteres Unicode, rejeitar somente espaços, preservar texto aceito. Grupo: nome com 1–100 caracteres após trim; 2–100 participantes únicos incluindo criador. Privada: exatamente dois participantes distintos incluindo criador, sem nome. Chat valida IDs na API interna de Auth com timeout de 2 segundos; falha resulta em 503, sem criar conversa parcial. Endpoint interno fica fora das rotas públicas do Traefik e valida o mesmo JWT.
 
-## Socket.IO previsto
+## Socket.IO
 
-Path `/socket.io`, namespace `/`, cliente e servidor `transports:['websocket']`. Handshake `auth:{token:JWT}`; token validado antes de associar salas autorizadas. `connect_error` usa mensagem legível e `data:{code,message,requestId}`. Na base atual `data` contém code e requestId; a mensagem é a propriedade `message` do erro.
+Path `/socket.io`, namespace `/`, cliente e servidor `transports:['websocket']`. Handshake `auth:{token:JWT}`; token validado antes de associar salas autorizadas. `connect_error` usa mensagem legível e `data:{code,message,requestId}`. Frames Socket.IO limitados a 64 KiB para acomodar conteúdo Unicode e envelope; a regra de mensagem permanece 1–4000 caracteres. Corpo HTTP limitado a 16 KiB.
 
 | Evento | Direção | Payload / resposta |
 |---|---|---|

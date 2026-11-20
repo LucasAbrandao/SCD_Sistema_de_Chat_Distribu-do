@@ -2,7 +2,7 @@
 
 ## Objetivo da etapa atual
 
-A etapa atual implementa o marco **Ambiente e contratos**, autorizado pelo usuário: monorepo, ambiente local reproduzível, saúde, roteamento e contratos. Termina quando a base compilar, um clone limpo subir pelo README, os componentes estiverem saudáveis e as evidências constarem em `docs/PROGRESSO.md`. Cadastro, login funcional, mensagens, grupos e carga ficam para tarefas posteriores. A dúvida de alta disponibilidade permanece aberta para a professora e não bloqueia a preparação local.
+A etapa atual implementa o marco **Auth, interface e chat privado**, autorizado pelo usuário após aprovação do plano: migrações versionadas, cadastro/login, JWT, conversas privadas, mensagens persistentes, interface e testes. Termina quando duas sessões autenticadas conversarem e recuperarem histórico, com evidências em `docs/PROGRESSO.md`. Grupos, carga e estudos formais de queda ficam para tarefas posteriores. A dúvida de alta disponibilidade permanece aberta para a professora.
 
 ## Antes de qualquer alteração
 

@@ -1,6 +1,10 @@
 export type ErrorCode = 'VALIDATION_ERROR' | 'UNAUTHENTICATED' | 'FORBIDDEN' | 'NOT_FOUND' | 'CONFLICT' | 'DEPENDENCY_UNAVAILABLE' | 'NOT_IMPLEMENTED' | 'INTERNAL_ERROR';
 export interface ApiError { error: { code: ErrorCode; message: string; requestId: string } }
 export interface User { id: string; username: string }
+export interface Page<T> { items: T[]; nextCursor: string | null }
+export interface ResolveUsers { ids: string[] }
+export interface ResolveUsersResult { users: User[]; missingIds: string[] }
+export interface SocketAuth { token: string }
 export interface RegisterInput { username: string; password: string }
 export interface LoginInput extends RegisterInput {}
 export interface LoginResult { accessToken: string; tokenType: 'Bearer'; expiresIn: number; user: User }

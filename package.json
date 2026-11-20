@@ -1,1 +1,30 @@
-{"name":"scd-chat","private":true,"version":"0.1.0","workspaces":["apps/*","services/*","packages/*"],"engines":{"node":">=22 <23"},"scripts":{"build":"npm run build --workspaces --if-present","typecheck":"npm run typecheck --workspaces --if-present","setup":"node scripts/setup.mjs","up":"docker compose up --build -d --wait","down":"docker compose down","smoke":"node tests/smoke.mjs"},"devDependencies":{"@types/node":"22.19.1","socket.io-client":"4.8.1","typescript":"5.9.3"}}
+{
+  "name": "scd-chat",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22 <23"
+  },
+  "scripts": {
+    "build": "npm run build --workspace @scd/contracts && npm run build --workspace @scd/auth && npm run build --workspace @scd/chat && npm run build --workspace @scd/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "setup": "node scripts/setup.mjs",
+    "up": "docker compose up --build -d --wait",
+    "down": "docker compose down",
+    "smoke": "node tests/smoke.mjs",
+    "test:unit": "npm run build && node --test tests/unit.test.mjs",
+    "test:integration": "node tests/suite.mjs integration",
+    "test:e2e": "node tests/suite.mjs e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "@types/node": "22.19.1",
+    "socket.io-client": "4.8.1",
+    "typescript": "5.9.3"
+  }
+}
