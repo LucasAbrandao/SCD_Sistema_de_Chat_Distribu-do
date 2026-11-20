@@ -1,14 +1,12 @@
 # Sistema de chat distribuído
 
-Base do marco **Ambiente e contratos**. Autenticação e mensagens funcionais pertencem aos próximos marcos. Consulte [arquitetura](docs/ARQUITETURA.md), [contratos](docs/CONTRATOS.md) e [progresso](docs/PROGRESSO.md).
+Chat privado com cadastro/login, mensagens em tempo real e histórico PostgreSQL. Monorepo TypeScript com React/Vite, Auth e Chat separados, duas réplicas por serviço, Redis e Traefik. Grupos, carga e testes formais de queda pertencem aos próximos marcos.
 
-## Requisitos
+Documentos: [arquitetura](docs/ARQUITETURA.md), [contratos](docs/CONTRATOS.md), [progresso e evidências](docs/PROGRESSO.md), [como funciona e como validar](docs/VALIDACAO.md).
 
-Git, Node.js 22.19.0 (npm 11) e Docker Engine com Compose v2.20+ ou Docker Desktop com containers Linux. Reserve a porta local 8080 e acesso ao npm/Docker Hub. No Windows, execute Docker Desktop ou use Docker Engine no WSL2. Não é necessário instalar PostgreSQL, Redis ou Traefik no host.
+## Preparar e iniciar
 
-## Iniciar a partir de um clone limpo
-
-Na raiz do clone, execute:
+Requisitos: Git, Node 22.19.0, npm 11 e Docker Engine/Compose v2.20+ ou Docker Desktop com containers Linux. Porta local 8080 livre. Não é necessário instalar banco, Redis ou ferramentas globais.
 
 ```sh
 npm ci
@@ -20,34 +18,40 @@ docker compose up --build -d --wait --wait-timeout 180
 npm run smoke
 ```
 
-Abra http://localhost:8080. `setup` gera `.env` com senha local aleatória e um par RSA em `secrets/`, preservando arquivos existentes. Não versionar esses arquivos. As chaves estão preparadas para o próximo marco e ainda não são usadas para emitir JWT. `.env.example` documenta a configuração sem segredos reais. Apenas Traefik publica porta, ligada a 127.0.0.1; nenhuma infraestrutura externa é criada.
+Abra http://localhost:8080. Cadastre dois usuários em sessões independentes e procure o outro usuário para conversar. Username: 3–32 letras minúsculas ASCII, números ou `_`; senha: 12–128 caracteres.
 
-Se Docker estiver apenas no WSL, mantenha um terminal Ubuntu aberto e execute os comandos `docker compose ...` na mesma pasta (ou prefixe-os com `wsl -u root --` se o usuário Linux ainda não tiver acesso ao socket). O terminal mantém a distribuição ativa; encerrá-la pode parar também os containers. Node e npm podem rodar no PowerShell. Não compartilhe `node_modules` entre instalações Node Linux/Windows; o build Docker usa seu próprio `npm ci`.
+No Windows desta instalação, Docker está no WSL: substitua cada comando `docker ...` por `wsl -u root -- docker ...` e **mantenha um terminal Ubuntu aberto**. Encerrar a distribuição pode parar a infraestrutura. Node/npm podem rodar no PowerShell; não compartilhe node_modules entre Node Windows e Linux.
 
-## Organização e operação
+`setup` preserva configuração/chaves existentes, gera senha aleatória e RSA em arquivos ignorados pelo Git, e acrescenta `REGISTRATION_ENABLED=true` apenas se ausente. Para demonstração com cadastro fechado, configure `REGISTRATION_ENABLED=false` no `.env` e recrie Auth com Compose. O smoke cria usuários fictícios e exige cadastro habilitado.
 
-- `apps/web`: React/Vite, página inicial responsiva com estado dos serviços; imagem Nginx.
-- `services/auth` e `services/chat`: processos Express separados; Chat prepara Socket.IO e adaptador Redis. Transporte em `src/index.ts`; regras e repositórios serão separados quando implementados.
-- `packages/contracts`: tipos públicos REST e eventos; `docs/CONTRATOS.md` define semântica e validação futura.
-- `docs`: arquitetura, contratos e progresso; `docs/enunciado` guarda o PDF original da professora.
-- `infra`: Nginx e configuração dinâmica de Traefik via arquivo, sem acesso ao socket Docker.
-- `tests/smoke.mjs`: verifica interface, duas réplicas por serviço, healthchecks, respostas 501 e recusa do handshake pelo proxy.
+Somente Traefik publica uma porta em 127.0.0.1. A API interna, PostgreSQL e Redis permanecem na rede Docker. Nenhum serviço externo ou túnel é publicado automaticamente.
 
-Compose inicia PostgreSQL com volume persistente, Redis, tarefa única `migrate`, duas réplicas de cada serviço, web e Traefik. Migrações versionadas criam apenas os esquemas `auth` e `chat`, são transacionais e idempotentes; nenhuma tabela de negócio foi criada. Próximas migrações devem ter executor versionado antes de incluir alterações não idempotentes. Esta base compartilha um usuário PostgreSQL de desenvolvimento; isolamento de propriedade é por esquema.
+## Operação e dados
 
 ```sh
-docker compose ps
+docker compose ps -a
 docker compose logs --tail=100
 docker compose run --rm migrate
 docker compose down
+docker compose up -d --wait
 ```
 
-`down` preserva o volume PostgreSQL. Não executar `down -v` em dados que devam ser preservados. Não há seed neste marco. Para reiniciar, use `docker compose up -d --wait`; para reconstruir, `npm run up`. Rotas públicas `/api/auth`, `/api/chat`, `/socket.io` e `/` preservam os prefixos; `/internal` não é exposto como API. Healthchecks do proxy retiram instâncias não aptas. A URL interna de Auth está preparada para a primeira réplica; balanceamento da consulta interna será entregue no marco de réplicas antes dos testes de falha.
+`down` preserva dados; não use `down -v` em dados importantes. Migrações são executadas antes das réplicas, em ordem, com transações, lock e registro de versão/checksum. Repetir a execução não reaplica arquivos concluídos. Alteração de arquivo aplicado gera erro; crie uma nova migração. Esquemas pertencem a cada serviço, com um usuário PostgreSQL compartilhado no ambiente local.
 
-Se `up --wait` falhar, confira `docker compose ps -a` e logs. Se a porta estiver ocupada, altere `PORT` no `.env` e use `BASE_URL` correspondente no smoke. Se houver acesso negado ao socket Docker no WSL, use um terminal com acesso ao daemon ou solicite ao administrador a configuração do usuário. Não registre o conteúdo do `.env` nos logs de evidência.
+O cliente mantém login na aba por até uma hora. Mensagem “Persistida” confirma gravação no servidor, sem indicar leitura. Mensagens e lista sincronizam a cada cinco segundos e ao recuperar conexão/foco. Reenvio após timeout mantém o identificador para evitar duplicação.
 
-Alta disponibilidade de infraestrutura e exigência de máquinas distintas aguardam confirmação da professora; isso não impede a preparação local. Não iniciar o próximo marco sem nova tarefa.
+## Testes
 
-## Verificação isolada de clone limpo
+```sh
+npm run test:unit
+npm run test:integration
+npx playwright install chromium
+npm run test:e2e
+node tests/clean-clone.mjs
+```
 
-`node tests/clean-clone.mjs` exige também RTK no PATH (convenção deste ambiente). O verificador copia somente arquivos não ignorados, cria um snapshot Git temporário e faz um clone local, sem criar commits no repositório da dupla. Executa os passos acima usando a porta 8081 e projeto Compose exclusivo; no Windows usa Docker no WSL como root. Ao terminar, remove os containers e preserva o snapshot e o volume de teste, informando seus caminhos. O uso normal pelo README não exige RTK.
+Integração e E2E criam snapshots isolados, configuração, chaves, projeto Compose e volume exclusivos. Usam porta 8082 (`TEST_PORT` permite outra); execute as duas suítes sequencialmente. Ao terminar, param seus containers e informam snapshot, log e volume preservados. Não limpam dados de desenvolvimento. E2E gera relatório HTML, traces em falhas e capturas desktop/celular no snapshot informado.
+
+Os executores isolados e clone limpo usam RTK conforme a convenção deste ambiente. O uso normal do aplicativo e testes unitários não exige RTK. Clone limpo usa porta 8081 e um commit apenas no snapshot temporário, sem alterar o histórico original.
+
+Se uma porta estiver ocupada, altere `PORT` no `.env` e `BASE_URL` ao executar smoke. Não imprima `.env`, senhas ou tokens para diagnosticar. A consulta interna de Auth ainda aponta para `auth-1`; balanceamento interno e estudo de falhas ficam no marco de réplicas. A interpretação de alta disponibilidade aguarda confirmação da professora.

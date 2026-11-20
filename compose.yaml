@@ -19,7 +19,7 @@ x-auth: &auth
     JWT_PRIVATE_KEY_FILE: /run/secrets/jwt_private
     JWT_ISSUER: scd-auth
     JWT_AUDIENCE: scd-chat
-    REGISTRATION_ENABLED: 'false'
+    REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-false}
   secrets: [jwt_private]
 x-chat: &chat
   <<: *service
@@ -56,18 +56,12 @@ services:
       timeout: 3s
       retries: 12
   migrate:
-    image: postgres:17.6-alpine
+    build: { context: ., target: auth }
     environment:
-      PGHOST: postgres
-      PGUSER: ${POSTGRES_USER}
-      PGPASSWORD: ${POSTGRES_PASSWORD}
-      PGDATABASE: ${POSTGRES_DB}
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     depends_on:
       postgres: { condition: service_healthy }
-    volumes:
-      - ./services/auth/migrations:/migrations/auth:ro
-      - ./services/chat/migrations:/migrations/chat:ro
-    command: [sh, -ec, 'psql -v ON_ERROR_STOP=1 -f /migrations/auth/001_schema.sql && psql -v ON_ERROR_STOP=1 -f /migrations/chat/001_schema.sql']
+    command: [node, scripts/migrate.mjs]
   auth-1: *auth
   auth-2: *auth
   chat-1: *chat

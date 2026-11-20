@@ -2,7 +2,7 @@
 
 ## Estado e objetivo
 
-Projeto acadêmico em dupla de Sistemas Distribuídos, CEFET-MG. A base do marco Ambiente e contratos está implementada e validada conforme `PROGRESSO.md`; funcionalidades de negócio permanecem pendentes.
+Projeto acadêmico em dupla de Sistemas Distribuídos, CEFET-MG. Ambiente, Auth, interface e chat privado implementados; evidências em `PROGRESSO.md`. Grupos, carga e estudos formais de falha permanecem pendentes.
 
 Fonte dos requisitos: [SD_TP_Final_2026.pdf](enunciado/SD_TP_Final_2026.pdf), duas páginas, fornecido pela professora. O relatório final deve ter até 10 páginas, incluir a URL do código e apresentar as decisões e os resultados dos estudos de caso. A apresentação ocorre em sala na data de entrega, ainda não registrada aqui.
 
@@ -50,7 +50,11 @@ flowchart TD
 
 Auth é proprietário dos usuários e credenciais. Chat é proprietário das conversas, membros e mensagens. Cada serviço possui seu esquema e suas migrações. Chat consulta a API interna de usuários para validar participantes, com timeout e erro explícito se Auth estiver indisponível. As réplicas compartilham o estado persistido e executam a mesma versão da aplicação.
 
-Organização prevista do monorepo: `apps/web`, `services/auth`, `services/chat`, `packages/contracts` e `tests`. Cada serviço separa transporte HTTP/socket, regras de negócio e persistência. Compartilhar contratos de entrada e saída, mantendo as regras nos serviços responsáveis.
+Monorepo: `apps/web`, `services/auth`, `services/chat`, `packages/contracts` e `tests`. Auth separa segurança e validação do transporte; Chat separa domínio, persistência e entrega do transporte. Contratos públicos compartilhados; regras permanecem nos serviços responsáveis.
+
+O executor Node de migrações usa lock de sessão PostgreSQL e uma tabela de versões/checksums em cada esquema. Arquivos são transacionais e checksums normalizam quebras de linha LF. As migrações iniciais são adotadas sem remover esquemas existentes. Senhas usam scrypt assíncrono do Node com parâmetros padrão (N=16384, r=8, p=1), salt aleatório de 16 bytes e derivação de 64 bytes; parâmetros fixos desta versão. JWT usa jose e RS256. O cliente guarda a sessão em sessionStorage até sair, fechar a aba ou expirar; sair não revoga um token já emitido.
+
+Tentativas de mensagem são serializadas por remetente/clientMessageId com advisory lock transacional, antes do bloqueio da conversa. Restrições únicas complementam os locks. A transação altera contador e mensagem conjuntamente; publicação ocorre após commit. O cursor do cliente avança apenas por páginas de histórico recebidas; eventos isolados não avançam esse cursor.
 
 Traefik expõe uma entrada na porta 8080, roteia `/api/auth`, `/api/chat` e `/socket.io` e serve a interface na raiz. Usar URLs relativas no navegador. Serviços internos e banco permanecem na rede Docker. Healthchecks orientam o encaminhamento para réplicas aptas. Migrações são uma etapa única anterior à inicialização das réplicas.
 

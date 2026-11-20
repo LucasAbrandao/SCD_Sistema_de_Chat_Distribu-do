@@ -4,47 +4,48 @@ Atualizado em 20/11/2026. A e B são identificadores provisórios dos integrante
 
 | Marco | Responsável | Estado | Evidência ou condição |
 |---|---|---|---|
-| Documentação inicial | Ambos | concluído | AGENTS.md na raiz; arquitetura e progresso em docs/ |
-| Colocação no novo repositório | Ambos | concluído | Arquivos no clone local de LucasAbrandao/SCD_Sistema_de_Chat_Distribu-do |
-| Organização do diretório principal | Ambos | concluído | Documentação em docs/ e PDF em docs/enunciado/; links locais e referências conferidos |
-| Validação da interpretação de disponibilidade | Ambos | pendente | Confirmar com a professora máquinas distintas e falhas de infraestrutura |
-| Ambiente e contratos | Ambos | concluído | Build, tipos, oito componentes saudáveis, migração exit 0 e smoke aprovados também em clone limpo local |
-| Auth, interface e chat privado | A / B | pendente | Login, envio e histórico entre duas sessões |
-| Grupos e autorização | A / B | pendente | Entrega a membros e bloqueio de terceiros |
-| Réplicas e recuperação | B / A | pendente | Entrega entre instâncias e retomada após queda |
+| Documentação inicial e organização | Ambos | concluído | Documentos em docs/ e enunciado preservado |
+| Ambiente e contratos | Ambos | concluído | Tipos, build, Compose e smoke em clone limpo |
+| Auth, interface e chat privado | A / B | concluído | Tipos/build, cinco testes unitários, integração, E2E isolado, reinício e clone limpo aprovados |
+| Revisão pela dupla e publicação | Ambos | pendente | Branch local codex/auth-chat-privado; sem push ou PR |
+| Validação da interpretação de disponibilidade | Ambos | pendente | Confirmar com professora máquinas distintas e falhas de infraestrutura |
+| Grupos e autorização de grupos | A / B | pendente | Entrega a membros e bloqueio de terceiros |
+| Réplicas e recuperação | B / A | pendente | Estudos formais de falha e balanceamento interno Auth |
 | Testes e carga | A / B | pendente | 100 usuários, 20 grupos e medições |
 | Relatório e apresentação | Ambos | pendente | Até 10 páginas, URL do código e ensaio |
 
-**Agora** — Marco Ambiente e contratos concluído. Organização da raiz na branch `codex/organizar-raiz`, preservando a implementação existente. Repositório original ainda sem commit inicial; nenhuma publicação ou PR realizado.
+**Agora** — Cadastro/login, JWT, usuários, conversas privadas, histórico, socket autenticado e interface implementados. Migrações versionadas com checksums, lock e transações integradas ao Compose. Restrições e locks garantem conversa única por dupla, idempotência por remetente/tentativa e posição crescente. Sessão por aba; sincronização após reconexão e a cada cinco segundos. Autorização de conversa privada testada.
 
-**Próximo passo** — Revisão pela dupla; aguardar tarefa para Auth, interface e chat privado. Confirmar disponibilidade com a professora antes da entrega final.
+**Versionamento** — Base registrada no commit local `ec7ab11`. Autor obtido do perfil GitHub do usuário, com endereço privado de commits GitHub. Trabalho na branch `codex/auth-chat-privado`; nenhuma publicação externa.
 
-**Parada desta etapa** — Encerrar após os critérios de Ambiente e contratos. Próximos marcos exigem nova tarefa.
+**Próximo passo** — Revisão da dupla e validação manual pelo roteiro [VALIDACAO.md](VALIDACAO.md). Grupos, carga e estudos formais de queda exigem tarefa posterior. Confirmar abrangência de disponibilidade com a professora antes da entrega final.
 
 ## Evidências executadas em 20/11/2026
 
-Ambiente: Windows, Node 22.19.0, npm 11.7.0; Docker Engine 29.7.2 e Compose 5.5.0 no Ubuntu 24.04/WSL2. Docker não está no PATH Windows; comandos Docker executados com `wsl -u root --` porque o usuário Linux não tem acesso ao socket. Não foi necessário instalar ferramentas globais. Dependências npm instaladas e fixadas no lockfile.
+Windows, Node 22.19.0, npm 11.7.0, Docker 29.7.2 no WSL2. Docker executado por `wsl -u root --`; terminal WSL ativo necessário nesta instalação. `.env` e chaves preservados e ignorados pelo Git. Dependências fixadas no lockfile.
 
-| Comando executado | Resultado |
+| Verificação executada | Resultado |
 |---|---|
-| `npm run setup` | `.env` e chaves RSA locais gerados, ignorados pelo Git |
-| `npm run typecheck` | Web, Auth, Chat e contracts aprovados |
-| `npm run build` | Quatro workspaces compilados; bundle React/Vite gerado |
-| `npm audit` | Zero vulnerabilidades reportadas após atualizar Vite para 7.3.8 |
-| `wsl -u root -- docker compose config --quiet` | Configuração válida |
-| `wsl -u root -- docker compose up --build -d --wait --wait-timeout 180` | Imagens construídas; após corrigir healthcheck IPv4 do Nginx e porta interna do Traefik, subida aprovada com `up -d --wait --wait-timeout 180` |
-| `npm run smoke` | Interface 200; duas instâncias distintas de Auth e Chat; healthchecks 200; rotas de negócio 501; Socket.IO recusa namespace com NOT_IMPLEMENTED pelo Traefik |
-| `node tests/clean-clone.mjs` | PASS: clone Git local sem dependências, `.env` ou chaves; repetiu npm ci/setup/tipos/build, Compose build/up e smoke na porta 8081 |
-| `docker compose ps -a` no clone | Oito componentes healthy; tarefa migrate finalizada com código 0 |
+| `npm run setup` | Configuração anterior preservada; cadastro local habilitado quando variável ausente |
+| `npm run typecheck` | Quatro workspaces aprovados |
+| `npm run test:unit` | Build completo e cinco testes aprovados: senhas, validação, JWT e erros públicos |
+| `npm run test:integration` | Dois cenários de API/socket aprovados; testes de persistência transacional e migrações aprovados; reinício completo preservou credenciais/histórico; cadastro desabilitado retornou 403 |
+| `npm run test:e2e` | Chromium real: duas sessões, cadastro, envio/resposta, reload com sessão, offline/reconexão, saída, desktop 1440×900 e celular 390×844; sem pageerror |
+| `node tests/clean-clone.mjs` | Clone local sem dependências, .env ou chaves: npm ci/setup/tipos/build, Compose build/up, oito healthy, migração exit 0 e smoke funcional aprovados |
+| `npm run smoke` | Interface, duas instâncias Auth/Chat, cadastro/login, criação privada, envio pelo proxy e histórico aprovados |
+| Instalações npm | Audit reportou zero vulnerabilidades nas instalações executadas |
+| `git diff --check` | Sem erros de whitespace |
 
-Snapshot de validação aprovado: `C:\Users\lucas\AppData\Local\Temp\scd-clean-DfL4oL\clone`, projeto `scdclean1795207773811`. O script encerrou os containers desse projeto; snapshot e volume de teste foram preservados. Como o repositório original não tem commits, o script fez um commit somente no snapshot temporário e clonou esse snapshot, sem alterar o índice ou histórico da dupla. Duas tentativas anteriores detectaram os problemas corrigidos de healthcheck e porta; a execução final passou integralmente.
+Snapshots e logs preservados:
 
-Contratos REST, autenticação, erros, paginação e Socket.IO revisados em `CONTRATOS.md`, com tipos em `packages/contracts`. Cadastro/login/envio/grupos/carga não foram implementados nem testados neste marco. A interface inicial mostra o estado dos serviços; não houve validação visual em navegador nesta etapa.
+- Integração completa: `C:\Users\lucas\AppData\Local\Temp\scd-test-rcdV7R\execution.log`; projeto `scdtest1795216691601`.
+- E2E isolado: `C:\Users\lucas\AppData\Local\Temp\scd-test-mwILyC\execution.log`; relatório em `source/playwright-report/index.html`.
+- Clone limpo: `C:\Users\lucas\AppData\Local\Temp\scd-clean-Sr2cld\clone`; projeto `scdclean1795216531668`.
+- Containers dos projetos de teste encerrados; snapshots e volumes preservados. Desenvolvimento na porta 8080 mantido disponível.
+- Capturas revisadas: [desktop](evidencias/desktop.png) e [celular](evidencias/mobile.png). Roteiro e explicação em [VALIDACAO.md](VALIDACAO.md).
 
-## Pendências e limites
+Um teste detectou ordenação textual de posições (`1,10,11,2`); a consulta foi corrigida para ordenar a coluna bigint, e o teste concorrente/paginado passou. Uma primeira tentativa de smoke encontrou a infraestrutura parada pelo encerramento do WSL; com sessão WSL ativa, subida e smoke passaram.
 
-- Sem bloqueio técnico para este marco. Para usar Docker pelo usuário Linux sem root, o administrador pode configurar o acesso ao socket; o procedimento WSL como root já foi validado.
-- Manter terminal WSL aberto ao operar Docker Engine nesta instalação; o encerramento automático da distribuição pode parar os containers. README registra o procedimento.
-- Professora: confirmar abrangência de alta disponibilidade (infraestrutura e máquinas distintas). Permanece pendente sem impedir esta base.
-- Revisão pela dupla e publicação via PR ainda pendentes; nenhum push foi feito. Demais marcos permanecem pendentes.
-- Base usa um usuário PostgreSQL local, esquemas separados e migrações iniciais idempotentes. Executor de migrações de negócio, autorização real e balanceamento de consultas internas Auth serão tratados nos marcos correspondentes.
+## Limites
+
+Grupos permanecem 501. Não há refresh token, revogação no logout ou confirmação de leitura. Falha de publicação após commit é recuperável pelo histórico; não existe promessa de entrega exatamente uma vez. Banco/Redis/proxy/host ainda são pontos únicos de falha. Auth interno aponta para auth-1 até o marco de réplicas. Não foram executados estudos de queda de réplica, carga de 100 usuários/20 grupos ou publicação externa. O teste de falha de publicação usa injeção na camada de entrega; não equivale a derrubar Redis em produção.
